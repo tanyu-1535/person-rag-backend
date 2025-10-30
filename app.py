@@ -289,11 +289,8 @@ async def health_check():
     """健康检查端点"""
     return {"status": "healthy", "message": "个人信息查询系统运行正常"}
 
-# Vercel需要这个变量
-app = app
-
-# 测试代码
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    logger.info("Starting uvicorn on port %s", port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
