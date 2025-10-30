@@ -24,7 +24,25 @@ from models import get_ali_clients
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-app = FastAPI(title="个人信息查询系统")
+# 在文件头部已 import os 的前提下 ========================
+# 1. 删除模块级初始化，改用 lifespan 事件
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Lifespan start")
+    # 初始化 RAG
+    global rag_system
+    try:
+        rag_system = initialize_rag_system()
+        logger.info("RAG initialized")
+    except Exception as e:
+        logger.exception("RAG init failed")
+        raise  # 让容器崩溃，方便你在日志看到异常
+    yield
+    logger.info("Lifespan end")
+
+app = FastAPI(title="个人信息查询系统", lifespan=lifespan)
 
 # 允许跨域请求
 app.add_middleware(
@@ -294,3 +312,4 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     logger.info("Starting uvicorn on port %s", port)
     uvicorn.run(app, host="0.0.0.0", port=port)
+
