@@ -1,15 +1,22 @@
-import os, sys, traceback, uvicorn, app
+# debug.py
+import os, sys, traceback
 
-port = int(os.environ["PORT"])
-print("[DEBUG] PORT =", port, file=sys.stderr)
 try:
-    uvicorn.run(
-        "app:app",
-        host="0.0.0.0",
-        port=port,
-        log_level="debug",
-    )
+    port = int(os.environ['PORT'])
+    print('[DEBUG] PORT =', port, file=sys.stderr, flush=True)
+
+    # 先不启动 uvicorn，只验证能否导入
+    import uvicorn
+    print('[DEBUG] uvicorn import ok', file=sys.stderr, flush=True)
+
+    import app
+    print('[DEBUG] app import ok', file=sys.stderr, flush=True)
+
+    # 再试着监听
+    uvicorn.run('app:app', host='0.0.0.0', port=port, log_level='debug')
 except Exception as e:
-    print("[CRASH]", e, file=sys.stderr)
+    # 把异常同时打到 stderr 和本地文件，双保险
     traceback.print_exc()
+    with open('/tmp/crash.log', 'w') as f:
+        traceback.print_exc(file=f)
     raise
